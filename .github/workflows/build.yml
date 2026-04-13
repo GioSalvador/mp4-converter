@@ -21,11 +21,11 @@ jobs:
         run: pip install pyinstaller
 
       - name: Prepare FFmpeg
-        run: |
-          mkdir ffmpeg_bin
-          curl -L -o ffmpeg.zip https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip
-          tar -xf ffmpeg.zip
-          move ffmpeg-*-essentials_build\bin\ffmpeg.exe ffmpeg_bin\ffmpeg.exe
+  	run: |
+  		if (!(Test-Path ffmpeg_bin)) { New-Item -ItemType Directory -Path ffmpeg_bin }
+    		curl -L -o ffmpeg.zip https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip
+		powershell Expand-Archive ffmpeg.zip -DestinationPath .
+   	 	move ffmpeg-*-essentials_build\bin\ffmpeg.exe ffmpeg_bin\ffmpeg.exe
 
       - name: Build EXE
         run: |
