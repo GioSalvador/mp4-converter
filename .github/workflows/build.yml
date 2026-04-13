@@ -28,11 +28,9 @@ jobs:
           }
 
           Invoke-WebRequest -Uri "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip" -OutFile "ffmpeg.zip"
-
           Expand-Archive -Path "ffmpeg.zip" -DestinationPath "."
 
           $ffmpegPath = Get-ChildItem -Recurse -Filter ffmpeg.exe | Where-Object { $_.FullName -like "*bin*" } | Select-Object -First 1
-
           Move-Item $ffmpegPath.FullName "ffmpeg_bin/ffmpeg.exe"
 
       - name: Build EXE
@@ -40,10 +38,41 @@ jobs:
         run: |
           pyinstaller --onefile --windowed ^
           --add-binary "ffmpeg_bin/ffmpeg.exe;ffmpeg_bin" ^
-          --name mp4-converter script.py
+          --name mp4-converter-windows script.py
 
-      - name: Upload Artifact
+      - name: Upload Windows
         uses: actions/upload-artifact@v4
         with:
           name: mp4-converter-windows
-          path: dist/mp4-converter.exe
+          path: dist/mp4-converter-windows.exe
+
+
+  build-linux:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install pyinstaller
+
+      - name: Install FFmpeg
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+
+      - name: Build Linux Binary
+        run: |
+          pyinstaller --onefile --windowed \
+          --add-binary "/usr/bin/ffmpeg:ffmpeg_bin" \
+          --name mp4-converter-linux script.py
+
+      - name: Upload Linux
+        uses: actions/upload-artifact@v4
+        with:
+          name: mp4-converter-linux
+          path: dist/mp4-converter-linux
