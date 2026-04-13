@@ -1,0 +1,40 @@
+name: Build App
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install pyinstaller
+
+      - name: Prepare FFmpeg
+        run: |
+          mkdir ffmpeg_bin
+          curl -L -o ffmpeg.zip https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip
+          tar -xf ffmpeg.zip
+          move ffmpeg-*-essentials_build\bin\ffmpeg.exe ffmpeg_bin\ffmpeg.exe
+
+      - name: Build EXE
+        run: |
+          pyinstaller --onefile --windowed ^
+          --add-binary "ffmpeg_bin/ffmpeg.exe;ffmpeg_bin" ^
+          --name mp4-converter script.py
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mp4-converter-windows
+          path: dist/mp4-converter.exe
