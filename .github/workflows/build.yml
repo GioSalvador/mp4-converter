@@ -2,7 +2,7 @@ name: Build App
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
 
 jobs:
   build-windows:
@@ -15,19 +15,28 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: "3.11"
 
       - name: Install dependencies
         run: pip install pyinstaller
 
       - name: Prepare FFmpeg
-  	run: |
-  		if (!(Test-Path ffmpeg_bin)) { New-Item -ItemType Directory -Path ffmpeg_bin }
-    		curl -L -o ffmpeg.zip https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip
-		powershell Expand-Archive ffmpeg.zip -DestinationPath .
-   	 	move ffmpeg-*-essentials_build\bin\ffmpeg.exe ffmpeg_bin\ffmpeg.exe
+        shell: pwsh
+        run: |
+          if (!(Test-Path "ffmpeg_bin")) {
+            New-Item -ItemType Directory -Path "ffmpeg_bin"
+          }
+
+          Invoke-WebRequest -Uri "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip" -OutFile "ffmpeg.zip"
+
+          Expand-Archive -Path "ffmpeg.zip" -DestinationPath "."
+
+          $ffmpegPath = Get-ChildItem -Recurse -Filter ffmpeg.exe | Where-Object { $_.FullName -like "*bin*" } | Select-Object -First 1
+
+          Move-Item $ffmpegPath.FullName "ffmpeg_bin/ffmpeg.exe"
 
       - name: Build EXE
+        shell: cmd
         run: |
           pyinstaller --onefile --windowed ^
           --add-binary "ffmpeg_bin/ffmpeg.exe;ffmpeg_bin" ^
